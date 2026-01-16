@@ -1,0 +1,75 @@
+############################################
+# Unreal Engine – C++ Only (Code Tracking)
+############################################
+
+# --- Core Unreal Generated Folders ---
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# --- Unreal Asset Content (HEAVY) ---
+Content/
+
+# --- Unreal Autosaves & Logs ---
+*.log
+*.tmp
+*.bak
+*.old
+
+# --- Unreal Crash & Debug ---
+CrashReportClient/
+*.dmp
+
+# --- IDE / Editor Files ---
+.vs/
+.vscode/
+.idea/
+*.sln
+*.xcodeproj
+*.xcworkspace
+*.code-workspace
+
+# --- Visual Studio ---
+*.VC.db
+*.VC.opendb
+*.VC.VC.opendb
+*.pdb
+*.ipch
+
+# --- Rider / CLion ---
+*.csproj.user
+*.suo
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Unreal Build Artifacts ---
+*.obj
+*.o
+*.a
+*.lib
+*.dll
+*.exe
+*.exp
+*.ilk
+
+# --- Unreal Shader & Cache ---
+*.ushaderprecache
+*.shadercache
+
+############################################
+# ALLOW (Explicitly Track These)
+############################################
+
+# Track C++ source code
+!Source/**
+
+# Track uproject file
+!*.uproject
+
+# Track config (optional but recommended)
+!Config/**
