@@ -14,15 +14,24 @@
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationYaw = true;
+	// GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->TargetArmLength = 300.0f;
+	CameraBoom->bUsePawnControlRotation = true;
+
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	Camera->bUsePawnControlRotation = false;
 }
 
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PC = Cast<APlayerController>(Controller))
+	if (const APlayerController* PC = Cast<APlayerController>(Controller))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
@@ -33,6 +42,8 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 	}
+	
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -44,6 +55,16 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		                                   &APlayerCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this,
 		                                   &APlayerCharacter::Look);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this,
+										   &APlayerCharacter::StartJump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this,
+										   &APlayerCharacter::StopJump);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this,
+										   &APlayerCharacter::StartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this,
+										   &APlayerCharacter::StopSprint);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this,
+										   &APlayerCharacter::ToggleCrouch);
 	}
 }
 
@@ -67,5 +88,33 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 	const FVector2D LookAxis = Value.Get<FVector2D>();
 
 	AddControllerYawInput(LookAxis.X);
-	AddControllerPitchInput(LookAxis.Y);
+	AddControllerPitchInput(-LookAxis.Y);
+}
+
+void APlayerCharacter::StartJump()
+{
+	Jump();
+}
+
+void APlayerCharacter::StopJump()
+{
+	StopJumping();
+}
+
+void APlayerCharacter::StartSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+}
+
+void APlayerCharacter::StopSprint()
+{
+	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+void APlayerCharacter::ToggleCrouch()
+{
+	if (bIsCrouched)
+		UnCrouch();
+	else
+		Crouch();
 }
