@@ -42,8 +42,33 @@ void APlayerCharacter::BeginPlay()
 			}
 		}
 	}
-	
+
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+}
+
+void APlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (bIsSprinting && CurrentStamina > 0.0f)
+	{
+		CurrentStamina -= StaminaDrainRate * DeltaTime;
+		if (CurrentStamina < 0.0f)
+		{
+			CurrentStamina = 0.0f;
+			StopSprint();
+		}
+	}
+	else if (bCanRecoverStamina)
+	{
+		CurrentStamina = FMath::Clamp(CurrentStamina + StaminaRecoveryRate * DeltaTime, 0.0f, MaxStamina);
+	}
+
+	if (GEngine)
+	{
+		const FString StaminaString = FString::Printf(TEXT("Stamina: %.1f"), CurrentStamina);
+		GEngine->AddOnScreenDebugMessage(1, 0.0f, FColor::Green, StaminaString);
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -56,15 +81,15 @@ void APlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this,
 		                                   &APlayerCharacter::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this,
-										   &APlayerCharacter::StartJump);
+		                                   &APlayerCharacter::StartJump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this,
-										   &APlayerCharacter::StopJump);
+		                                   &APlayerCharacter::StopJump);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this,
-										   &APlayerCharacter::StartSprint);
+		                                   &APlayerCharacter::StartSprint);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this,
-										   &APlayerCharacter::StopSprint);
+		                                   &APlayerCharacter::StopSprint);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this,
-										   &APlayerCharacter::ToggleCrouch);
+		                                   &APlayerCharacter::ToggleCrouch);
 	}
 }
 
@@ -103,18 +128,38 @@ void APlayerCharacter::StopJump()
 
 void APlayerCharacter::StartSprint()
 {
-	GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	if (CurrentStamina > 0.0f)
+	{
+		bIsSprinting = true;
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	}
+}
+
+void APlayerCharacter::EnableStaminaRecovery()
+{
+	bCanRecoverStamina = true;
 }
 
 void APlayerCharacter::StopSprint()
 {
+	bIsSprinting = false;
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+
+	bCanRecoverStamina = false;
+
+	GetWorldTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
+	GetWorldTimerManager().SetTimer(StaminaRecoveryTimerHandle, this,
+	                                &APlayerCharacter::EnableStaminaRecovery, StaminaRecoveryDelay, false);
 }
 
 void APlayerCharacter::ToggleCrouch()
 {
 	if (bIsCrouched)
+	{
 		UnCrouch();
+	}
 	else
+	{
 		Crouch();
+	}
 }

@@ -25,6 +25,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Move(const FInputActionValue& Value);
@@ -46,20 +47,43 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction* JumpAction;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction* SprintAction;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	UInputAction* CrouchAction;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Camera")
 	UCameraComponent* Camera;
-	
+
 private:
 	float WalkSpeed = 600.0f;
 	float SprintSpeed = 900.0f;
+
+	bool bIsSprinting;
+
+	UPROPERTY(EditAnywhere, Category="Stamina")
+	float MaxStamina = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category="Stamina")
+	float CurrentStamina = 100.0f;
+
+	UPROPERTY(EditAnywhere, Category="Stamina")
+	float StaminaDrainRate = 25.0f;
+
+	UPROPERTY(EditAnywhere, Category="Stamina")
+	float StaminaRecoveryRate = 15.0f;
+
+	FTimerHandle StaminaRecoveryTimerHandle;
+
+	bool bCanRecoverStamina = true;
+
+	UPROPERTY(EditDefaultsOnly, Category="Stamina")
+	float StaminaRecoveryDelay = 10.0f;
+
+	void EnableStaminaRecovery();
 };
